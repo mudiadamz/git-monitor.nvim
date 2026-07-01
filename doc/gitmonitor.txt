@@ -40,8 +40,10 @@ PANEL KEYS                                                 *gitmonitor-keys*
   r            git fetch ALL repos, then refresh counts
   p            pull repo under cursor (stash-if-dirty -> pull -> stash pop)
   P            push repo under cursor (asks to confirm)
+  c            checkout branch in repo under cursor (stash -> checkout -> pop)
   <leader>p    pull ALL repos (confirms)
   <leader>P    push ALL repos (confirms)
+  <leader>c    checkout branch in ALL repos (prompts + confirms)
   j / k        move between repos (highlighted; cursor clamped to repo rows)
   q / <Esc>    close
 

@@ -10,7 +10,7 @@ repo plus every nested git sub-repo (the polyrepo layout) from one place.
  -- sub-repo1                    |  main    |  0      |  2
  -- sub-repo2 (fetch)    |  dev     |  0      |  0
  -- sub-repo3              |  main    |  0      |  0
- p:pull  P:push  \p:pull-all  \P:push-all   r:fetch  q:close
+ p:pull  P:push  c:checkout    <leader>p/P/c: all    r:fetch  q:close
 ```
 
 - **Local** = commits ahead (unpushed) · **Upstream** = commits behind (unpulled)
@@ -68,7 +68,8 @@ use({ "mudiadamz/git-monitor.nvim", config = function() require("gitmonitor").se
   | `r` | `git fetch` **all** repos, then refresh counts |
   | `p` | pull the repo under the cursor (stash → pull → stash pop) |
   | `P` | push the repo under the cursor (**confirms** first) |
-  | `<leader>p` / `<leader>P` | pull / push **all** repos (each confirms) |
+  | `c` | checkout a branch in the repo under the cursor (stash -> checkout -> stash pop) |
+  | `<leader>p` / `<leader>P` / `<leader>c` | pull / push / checkout **all** repos (each confirms) |
   | `j` / `k` | move between repos (highlighted) |
   | `q` / `<Esc>` | close |
 

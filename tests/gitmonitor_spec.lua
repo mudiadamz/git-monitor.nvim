@@ -39,7 +39,8 @@ end
 -- ---------------------------------------------------------------------------
 group("module + setup")
 for _, fn in ipairs({ "setup", "open", "close", "collect", "render", "root", "refresh",
-  "pull_repo", "push_repo", "push_current", "pull_all", "push_all", "confirm" }) do
+  "pull_repo", "push_repo", "push_current", "pull_all", "push_all", "confirm",
+  "checkout_repo", "checkout_current", "checkout_all", "input" }) do
   ok(type(gm[fn]) == "function", "M." .. fn .. " exists")
 end
 ok(vim.fn.exists(":GitMonitor") == 2, ":GitMonitor command created by setup()")
@@ -158,6 +159,21 @@ else
   vim.wait(8000, function() return pushed ~= nil end)
   ok(pushed and pushed.code == 0, "push_repo succeeds")
   eq(stat(RT, "repo").ahead, 0, "after push -> Local(ahead)=0")
+
+  -- CHECKOUT (stash+pop): switch branch, preserving WIP
+  vim.fn.writefile({ "v1" }, RT .. "/repo/tracked.txt")
+  gitc(RT .. "/repo", { "add", "tracked.txt" })
+  gitc(RT .. "/repo", { "-c", "commit.gpgsign=false", "commit", "-q", "-m", "add tracked" })
+  gitc(RT .. "/repo", { "branch", "feature" })
+  vim.fn.writefile({ "v2 dirty" }, RT .. "/repo/tracked.txt")
+  r.status = stat(RT, "repo")
+  eq(r.status.dirty, true, "WIP present before checkout")
+  local co = {}
+  gm.checkout_repo(r, "feature", { quiet = true, done = function(res) co.res = res end })
+  vim.wait(8000, function() return co.res ~= nil end)
+  ok(co.res and co.res.code == 0, "checkout_repo (stash+pop) succeeds")
+  eq(stat(RT, "repo").branch, "feature", "switched to the feature branch")
+  eq(stat(RT, "repo").dirty, true, "WIP preserved across checkout (stash -> checkout -> pop)")
   gm.close()
 end
 

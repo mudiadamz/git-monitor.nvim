@@ -19,9 +19,10 @@
 -- Panel keys:
 --   r          fetch ALL repos, then refresh counts
 --   p / P      pull / push the repo under the cursor (P confirms first)
---   <leader>p / <leader>P   pull / push ALL repos (each confirms)
+--   c          checkout a branch in the repo under the cursor (prompts)
+--   <leader>p / <leader>P / <leader>c   pull / push / checkout ALL repos (confirm)
 --   q / <Esc>  close
--- pull = stash (if dirty) -> pull -> stash pop.
+-- pull / checkout = stash (if dirty) -> op -> stash pop.
 -- ===========================================================================
 
 local M = {}
@@ -170,7 +171,7 @@ function M.render(data)
   for i = 2, #rows do
     lines[#lines + 1] = fmt(rows[i])
   end
-  lines[#lines + 1] = " p:pull  P:push  \\p:pull-all  \\P:push-all   r:fetch  q:close "
+  lines[#lines + 1] = " p:pull  P:push  c:checkout    <leader>p/P/c: all    r:fetch  q:close "
   return lines
 end
 
@@ -212,6 +213,8 @@ local function draw()
     vim.keymap.set("n", "P", M.push_current, o)
     vim.keymap.set("n", "<leader>p", M.pull_all, o)
     vim.keymap.set("n", "<leader>P", M.push_all, o)
+    vim.keymap.set("n", "c", M.checkout_current, o)
+    vim.keymap.set("n", "<leader>c", M.checkout_all, o)
     -- Keep the cursor on repo rows only, so j/k moves repo-to-repo and the
     -- cursorline highlight always sits on a real repo.
     vim.api.nvim_create_autocmd("CursorMoved", {
@@ -286,6 +289,11 @@ end
 
 -- ---- actions ------------------------------------------------------------
 
+-- Prompt for one line of input; cb(value). A module field so tests can stub it.
+function M.input(prompt, cb)
+  vim.ui.input({ prompt = prompt }, cb)
+end
+
 -- Yes/No confirm, default No. A module field so tests can stub it.
 function M.confirm(msg)
   return vim.fn.confirm(msg, "&Yes\n&No", 2) == 1
@@ -344,6 +352,57 @@ function M.push_current()
   if r and M.confirm("Push " .. r.name .. "?") then
     M.push_repo(r)
   end
+end
+
+-- Checkout <branch>: stash (if dirty) -> checkout -> stash pop. opts={quiet,done}.
+function M.checkout_repo(r, branch, opts)
+  opts = opts or {}
+  local dirty = r.status and r.status.dirty
+  r.busy = "checkout"; update()
+  local function finish(res)
+    r.busy = nil
+    if res and res.code ~= 0 then
+      vim.notify("git checkout " .. r.name .. ": " .. vim.trim(res.stderr ~= "" and res.stderr or res.stdout),
+        vim.log.levels.ERROR)
+    elseif not opts.quiet then
+      vim.notify("git checkout " .. r.name .. " -> " .. branch .. ": ok", vim.log.levels.INFO)
+    end
+    status_async(r, function() if opts.done then opts.done(res) end end)
+  end
+  local function do_checkout()
+    run(r.dir, { "checkout", branch }, function(res_co)
+      if dirty then
+        run(r.dir, { "stash", "pop" }, function() finish(res_co) end)
+      else
+        finish(res_co)
+      end
+    end)
+  end
+  if dirty then
+    run(r.dir, { "stash", "push", "--include-untracked", "-q" }, function() do_checkout() end)
+  else
+    do_checkout()
+  end
+end
+
+-- Checkout a branch in the repo under the cursor (prompts for the branch).
+function M.checkout_current()
+  local r = repo_under_cursor()
+  if not r then return end
+  M.input("Checkout branch in " .. r.name .. ": ", function(branch)
+    if branch and branch ~= "" then M.checkout_repo(r, branch) end
+  end)
+end
+
+-- Checkout the same branch in ALL repos (prompts, then confirms).
+function M.checkout_all()
+  local repos = state.repos or {}
+  if #repos == 0 then return end
+  M.input("Checkout branch in ALL " .. #repos .. " repos: ", function(branch)
+    if not branch or branch == "" then return end
+    if not M.confirm("Checkout '" .. branch .. "' in all " .. #repos .. " repos (stash+pop)?") then return end
+    for _, r in ipairs(repos) do M.checkout_repo(r, branch, { quiet = true }) end
+  end)
 end
 
 function M.pull_all()
