@@ -43,7 +43,7 @@ or all of them — without leaving the panel.
 
 ```lua
 {
-  "adaminfini/git-monitor.nvim",
+  "mudiadamz/git-monitor.nvim",
   keys = { { "<leader>gm", function() require("gitmonitor").open() end, desc = "Git monitor" } },
   opts = {},   -- calls require("gitmonitor").setup({})
 }
@@ -52,7 +52,7 @@ or all of them — without leaving the panel.
 **packer.nvim**
 
 ```lua
-use({ "adaminfini/git-monitor.nvim", config = function() require("gitmonitor").setup({}) end })
+use({ "mudiadamz/git-monitor.nvim", config = function() require("gitmonitor").setup({}) end })
 ```
 
 **Native packages** — clone into `pack/*/start`, then `:GitMonitor` just works
