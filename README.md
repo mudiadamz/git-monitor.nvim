@@ -6,10 +6,10 @@ repo plus every nested git sub-repo (the polyrepo layout) from one place.
 ```
  Repo                    |  Branch  |  Local  |  Upstream
 -----------------------------------------------------------
- root *                  |  main    |  1      |  0
- core                    |  main    |  0      |  2
- adapter-http (fetch)    |  dev     |  0      |  0
- backoffice              |  main    |  0      |  0
+ root-repo *                  |  main    |  1      |  0
+ -- sub-repo1                    |  main    |  0      |  2
+ -- sub-repo2 (fetch)    |  dev     |  0      |  0
+ -- sub-repo3              |  main    |  0      |  0
  p:pull  P:push  \p:pull-all  \P:push-all   r:fetch  q:close
 ```
 
