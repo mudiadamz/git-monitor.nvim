@@ -1,0 +1,58 @@
+*gitmonitor.txt*  Multi-repo git monitor + control panel for Neovim
+
+==============================================================================
+INTRODUCTION                                                      *gitmonitor*
+
+git-monitor.nvim shows a floating panel listing a parent repo plus each nested
+git sub-repo (a polyrepo) as:
+
+    Repo | Branch | Local | Upstream
+
+  Local     commits ahead of upstream (unpushed)
+  Upstream  commits behind upstream (unpulled)
+  '*'       after a repo name: uncommitted local changes
+  (fetch)/(pull)/(push)  an operation is running on that repo
+
+The panel opens instantly with '...' placeholders and fills each row
+asynchronously. Requires Neovim 0.10+ (uses |vim.system()|).
+
+==============================================================================
+SETUP                                                       *gitmonitor.setup*
+
+    require("gitmonitor").setup({
+      keymap = "<leader>gm",   -- normal-mode key to open; nil = none
+      highlight = { bg = "#2f5b8c", bold = true },  -- selected-row highlight
+      root = nil,              -- function(): string; nil = default
+    })
+
+setup() creates the |:GitMonitor| command and, if `keymap` is given, a mapping.
+`root` returns the directory to scan (its git sub-dirs, plus itself if a repo).
+Default: an open NERDTree window's root if present, else the cwd.
+
+==============================================================================
+COMMANDS                                                        *:GitMonitor*
+
+:GitMonitor        Open the panel.
+
+==============================================================================
+PANEL KEYS                                                 *gitmonitor-keys*
+
+  r            git fetch ALL repos, then refresh counts
+  p            pull repo under cursor (stash-if-dirty -> pull -> stash pop)
+  P            push repo under cursor (asks to confirm)
+  <leader>p    pull ALL repos (confirms)
+  <leader>P    push ALL repos (confirms)
+  j / k        move between repos (highlighted; cursor clamped to repo rows)
+  q / <Esc>    close
+
+==============================================================================
+API                                                          *gitmonitor-api*
+
+  require("gitmonitor").open()          open/refresh the panel
+  require("gitmonitor").collect(root)   -> { root, repos = {...} } (sync)
+  require("gitmonitor").refresh(done)   fetch all + re-status
+
+Network operations set GIT_TERMINAL_PROMPT=0 so a missing credential fails fast
+instead of hanging. git is invoked directly (no shell).
+
+ vim:tw=78:ts=8:ft=help:norl:

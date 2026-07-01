@@ -1,0 +1,8 @@
+# Neovim / editor junk
+*.swp
+*.swo
+.DS_Store
+tags
+
+# test scratch (suite uses tempdirs, but just in case)
+tests/.cache/
